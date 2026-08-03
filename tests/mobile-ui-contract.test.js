@@ -14,6 +14,13 @@ test('base template declares a mobile viewport', () => {
     assert.match(baseTemplate, /name="viewport"[^>]*width=device-width/);
 });
 
+test('mobile control assets are cache busted', () => {
+    assert.match(baseTemplate, /filename='css\/main\.css', v='mobile-controls-2'/);
+    assert.match(baseTemplate, /filename='js\/game\.js', v='mobile-controls-2'/);
+    assert.match(gameTemplate, /filename='js\/game-controls\.js', v='mobile-controls-2'/);
+    assert.match(gameTemplate, /filename='js\/game\.js', v='mobile-controls-2'/);
+});
+
 test('game canvas is focusable and exposes mobile input controls', () => {
     assert.match(gameTemplate, /id="canvas"[^>]*tabindex="0"/);
     assert.match(gameTemplate, /id="mobile_controls"/);
