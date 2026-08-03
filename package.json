@@ -1,0 +1,11 @@
+{
+  "name": "chinese-dos-games-web",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test tests/mobile-controls.e2e.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

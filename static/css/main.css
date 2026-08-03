@@ -153,3 +153,210 @@ canvas.emscripten {
 .exit_fullscreen_show:hover {
     opacity: 1;
 }
+
+canvas.emscripten {
+    touch-action: none;
+}
+
+.mobile-control-hint {
+    clear: both;
+    color: #495057;
+    font-size: 0.9rem;
+    margin: 1rem 0 0.5rem;
+}
+
+.mobile-controls {
+    background: #111827;
+    border-radius: 0.75rem;
+    color: #f8fafc;
+    margin-top: 0.75rem;
+    padding: 0.75rem 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.mobile-control-tabs {
+    display: grid;
+    gap: 0.35rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 0.75rem;
+}
+
+.mobile-control-tabs button,
+.mobile-controls .control-panel button {
+    background: #334155;
+    border: 1px solid #64748b;
+    border-radius: 0.55rem;
+    color: #f8fafc;
+    min-height: 44px;
+}
+
+.mobile-control-tabs button[aria-selected="true"],
+.mobile-controls button.is-pressed {
+    background: #2563eb;
+    border-color: #93c5fd;
+    transform: translateY(1px);
+}
+
+.control-panel[hidden] {
+    display: none !important;
+}
+
+.gamepad-panel {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dpad {
+    display: grid;
+    grid-template-areas: ". up ." "left center right" ". down .";
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: center;
+    justify-self: center;
+    max-width: 192px;
+    width: 100%;
+}
+
+.dpad button,
+.gamepad-actions button {
+    aspect-ratio: 1;
+    font-size: 1.25rem;
+    font-weight: 700;
+    position: relative;
+}
+
+.dpad button::after,
+.gamepad-actions button::after {
+    bottom: 2px;
+    content: attr(data-bound-key);
+    font-size: 0.55rem;
+    font-weight: 400;
+    left: 0;
+    position: absolute;
+    right: 0;
+}
+
+.dpad-up { grid-area: up; }
+.dpad-down { grid-area: down; }
+.dpad-left { grid-area: left; }
+.dpad-right { grid-area: right; }
+.dpad-center { grid-area: center; opacity: 0.35; }
+
+.gamepad-actions {
+    align-content: center;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: center;
+    justify-self: center;
+    max-width: 152px;
+    width: 100%;
+}
+
+.gamepad-system {
+    display: flex;
+    gap: 0.75rem;
+    grid-column: 1 / -1;
+    justify-content: center;
+}
+
+.gamepad-system button {
+    min-width: 96px;
+}
+
+.virtual-trackpad {
+    align-items: center;
+    background: #1e293b;
+    border: 1px solid #64748b;
+    border-radius: 0.75rem;
+    color: #94a3b8;
+    display: flex;
+    height: 180px;
+    justify-content: center;
+}
+
+.mouse-buttons {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 0.75rem;
+}
+
+.virtual-keyboard {
+    padding-bottom: 0.35rem;
+}
+
+.virtual-keyboard-row {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+}
+
+.virtual-key {
+    flex: 1 1 0;
+    font-size: 0.78rem;
+    min-width: 28px;
+    padding: 0.25rem;
+}
+
+.mapping-panel p {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+}
+
+.mapping-editor {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 0.75rem;
+}
+
+.mapping-row {
+    align-items: center;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 3rem 1fr;
+    margin: 0;
+}
+
+.mapping-row select {
+    background: #f8fafc;
+    border-radius: 0.35rem;
+    min-height: 38px;
+    width: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .container.mt-3 {
+        margin-top: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .container.mt-3 > .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .container.mt-3 > .row > div {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .game-title,
+    #controls {
+        display: block;
+        float: none;
+    }
+
+    #controls span input {
+        margin: 0.2rem 0;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+}

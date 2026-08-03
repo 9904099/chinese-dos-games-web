@@ -10,3 +10,7 @@ function htmlFullscreen() {
         exitButton.classList.add('exit_fullscreen_show');
     }
 }
+
+if (window.DosGameControls) {
+    window.dosGameControls = window.DosGameControls.init(document);
+}

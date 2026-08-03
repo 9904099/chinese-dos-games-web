@@ -5,10 +5,11 @@
 {% block main %}
     <div class="container mt-3">
         <div class="row">
-            <div class="col-sm-8">
+            <div class="col-lg-8">
                 <div class="card mb-3">
                     <div id="screen_container">
-                        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+                        <canvas class="emscripten" id="canvas" tabindex="0"
+                                aria-label="DOS 游戏画面" oncontextmenu="event.preventDefault()"></canvas>
                     </div>
                     <div class="card-body">
                         <div>
@@ -20,10 +21,58 @@
                                              onclick="emulator.requestFullScreen();"></span>
                             </div>
                         </div>
+                        <p class="mobile-control-hint">手机请先点“启动/聚焦游戏”，再使用下方手柄、鼠标或键盘。</p>
+                        <button class="btn btn-primary btn-block" id="game_focus_button" type="button">启动/聚焦游戏</button>
+                        <section class="mobile-controls" id="mobile_controls" aria-label="移动端游戏控制">
+                            <div class="mobile-control-tabs" role="tablist" aria-label="控制方式">
+                                <button type="button" data-control="gamepad" aria-selected="true">手柄</button>
+                                <button type="button" data-control="mouse" aria-selected="false">鼠标</button>
+                                <button type="button" data-control="keyboard" aria-selected="false">键盘</button>
+                                <button type="button" data-control="mapping" aria-selected="false">按键设置</button>
+                            </div>
+
+                            <div class="control-panel gamepad-panel" data-control-panel="gamepad">
+                                <div class="dpad" aria-label="方向键">
+                                    <button type="button" class="dpad-up" data-gamepad-action="up">↑</button>
+                                    <button type="button" class="dpad-left" data-gamepad-action="left">←</button>
+                                    <button type="button" class="dpad-center" disabled></button>
+                                    <button type="button" class="dpad-right" data-gamepad-action="right">→</button>
+                                    <button type="button" class="dpad-down" data-gamepad-action="down">↓</button>
+                                </div>
+                                <div class="gamepad-actions" aria-label="动作键">
+                                    <button type="button" data-gamepad-action="x">X</button>
+                                    <button type="button" data-gamepad-action="y">Y</button>
+                                    <button type="button" data-gamepad-action="a">A</button>
+                                    <button type="button" data-gamepad-action="b">B</button>
+                                </div>
+                                <div class="gamepad-system">
+                                    <button type="button" data-gamepad-action="select">选择</button>
+                                    <button type="button" data-gamepad-action="start">开始</button>
+                                </div>
+                            </div>
+
+                            <div class="control-panel mouse-panel" data-control-panel="mouse" hidden>
+                                <div id="virtual_trackpad" class="virtual-trackpad" aria-label="虚拟触控板">拖动控制鼠标</div>
+                                <div class="mouse-buttons">
+                                    <button type="button" data-mouse-button="0">左键</button>
+                                    <button type="button" data-mouse-button="2">右键</button>
+                                </div>
+                            </div>
+
+                            <div class="control-panel keyboard-panel" data-control-panel="keyboard" hidden>
+                                <div id="virtual_keyboard" class="virtual-keyboard" aria-label="虚拟键盘"></div>
+                            </div>
+
+                            <div class="control-panel mapping-panel" data-control-panel="mapping" hidden>
+                                <p>为虚拟手柄选择 DOS 键位，设置保存在当前浏览器。</p>
+                                <div id="mapping_editor" class="mapping-editor"></div>
+                                <button type="button" class="btn btn-light btn-block" id="reset_mappings">恢复默认按键</button>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-lg-4">
                 {% if game_info.keymaps %}
                     <div class="card mb-3">
                         <div class="card-body">
@@ -90,6 +139,7 @@
             }
         }
     </script>
+    <script src="{{ url_for('static', filename='js/game-controls.js') }}"></script>
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
 {% endblock %}
 
