@@ -1,15 +1,60 @@
 function htmlFullscreen() {
-    var gameCanvas = document.getElementById('canvas');
-    var exitButton = document.getElementById('exit_button')
-    if (gameCanvas.classList.contains('html-fullscreen')) {
-        gameCanvas.classList.remove('html-fullscreen');
+    var screenContainer = document.getElementById('screen_container');
+    var exitButton = document.getElementById('exit_button');
+    if (screenContainer.classList.contains('html-fullscreen')) {
+        screenContainer.classList.remove('html-fullscreen');
         exitButton.classList.remove('exit_fullscreen_show');
     }
     else {
-        gameCanvas.classList.add('html-fullscreen');
+        screenContainer.classList.add('html-fullscreen');
         exitButton.classList.add('exit_fullscreen_show');
     }
 }
+
+function gameFullscreen() {
+    var screenContainer = document.getElementById('screen_container');
+    var request = screenContainer.requestFullscreen || screenContainer.webkitRequestFullscreen;
+    if (request) {
+        try {
+            var result = request.call(screenContainer);
+            if (result && typeof result.then === 'function') {
+                result.then(function () {
+                    document.getElementById('exit_button').classList.add('exit_fullscreen_show');
+                }, function () {
+                    htmlFullscreen();
+                });
+            }
+            else {
+                document.getElementById('exit_button').classList.add('exit_fullscreen_show');
+            }
+        }
+        catch (error) {
+            htmlFullscreen();
+        }
+    }
+    else {
+        htmlFullscreen();
+    }
+}
+
+function exitGameFullscreen() {
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        exit.call(document);
+    }
+    else if (document.getElementById('screen_container').classList.contains('html-fullscreen')) {
+        htmlFullscreen();
+    }
+}
+
+function syncFullscreenExitButton() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        document.getElementById('exit_button').classList.remove('exit_fullscreen_show');
+    }
+}
+
+document.addEventListener('fullscreenchange', syncFullscreenExitButton);
+document.addEventListener('webkitfullscreenchange', syncFullscreenExitButton);
 
 if (window.DosGameControls) {
     window.dosGameControls = window.DosGameControls.init(document);

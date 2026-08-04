@@ -2,6 +2,7 @@
 
 
 {% block title %}{{ game_info["name"]["zh-Hans"] }}{% endblock %}
+{% block body_class %}game-page{% endblock %}
 {% block main %}
     <div class="container mt-3">
         <div class="row">
@@ -10,20 +11,15 @@
                     <div id="screen_container">
                         <canvas class="emscripten" id="canvas" tabindex="0"
                                 aria-label="DOS 游戏画面" oncontextmenu="event.preventDefault()"></canvas>
-                    </div>
-                    <div class="card-body">
-                        <div>
-                            <h5 class="card-title game-title">{{ game_info["name"]["zh-Hans"] }}</h5>
-                            <div id='controls'>
-                                <span><input class="btn btn-light" type="button" value="网页全屏"
-                                             onclick="htmlFullscreen();"></span>
-                                <span><input class="btn btn-light" type="button" value="全屏游戏"
-                                             onclick="emulator.requestFullScreen();"></span>
-                            </div>
-                        </div>
-                        <p class="mobile-control-hint">手机请先点“启动/聚焦游戏”，再使用下方手柄、鼠标或键盘。</p>
-                        <button class="btn btn-primary btn-block" id="game_focus_button" type="button">启动/聚焦游戏</button>
                         <section class="mobile-controls" id="mobile_controls" aria-label="移动端游戏控制">
+                            <button class="btn btn-primary btn-block game-focus-button" id="game_focus_button"
+                                    type="button">启动/聚焦游戏</button>
+                            <div id="controls" class="mobile-screen-actions">
+                                <input class="btn btn-light" type="button" value="网页全屏"
+                                       onclick="htmlFullscreen();">
+                                <input class="btn btn-light" type="button" value="全屏游戏"
+                                       onclick="gameFullscreen();">
+                            </div>
                             <div class="mobile-control-tabs" role="tablist" aria-label="控制方式">
                                 <button type="button" data-control="gamepad" aria-selected="true">手柄</button>
                                 <button type="button" data-control="mouse" aria-selected="false">鼠标</button>
@@ -69,6 +65,16 @@
                                 <button type="button" class="btn btn-light btn-block" id="reset_mappings">恢复默认按键</button>
                             </div>
                         </section>
+                        <div class="exit_fullscreen" id="exit_button">
+                            <input class="btn btn-light" type="button" value="退出全屏" onclick="exitGameFullscreen();">
+                        </div>
+                        <!-- screen_container_end -->
+                    </div>
+                    <div class="card-body">
+                        <div>
+                            <h5 class="card-title game-title">{{ game_info["name"]["zh-Hans"] }}</h5>
+                        </div>
+                        <p class="mobile-control-hint">手机请先点“启动/聚焦游戏”，再使用下方手柄、鼠标或键盘。</p>
                     </div>
                 </div>
             </div>
@@ -107,9 +113,6 @@
         </div>
     </div>
 
-    <div class="exit_fullscreen" id="exit_button">
-        <input class="btn btn-light" type="button" value="退出" onclick="htmlFullscreen();">
-    </div>
     <script type="text/javascript" src="{{ url_for('static', filename='emularity/es6-promise.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='emularity/browserfs.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='emularity/loader.js') }}"></script>
@@ -139,7 +142,7 @@
             }
         }
     </script>
-    <script src="{{ url_for('static', filename='js/game-controls.js', v='mobile-controls-2') }}"></script>
-    <script src="{{ url_for('static', filename='js/game.js', v='mobile-controls-2') }}"></script>
+    <script src="{{ url_for('static', filename='js/game-controls.js', v='mobile-controls-3') }}"></script>
+    <script src="{{ url_for('static', filename='js/game.js', v='mobile-controls-3') }}"></script>
 {% endblock %}
 

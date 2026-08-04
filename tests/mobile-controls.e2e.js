@@ -39,6 +39,118 @@ test('gamepad fits a 320px viewport without internal overflow', async ({page}) =
     });
     expect(keyboardWidths.keyboard[1]).toBe(keyboardWidths.keyboard[0]);
     keyboardWidths.rows.forEach(width => expect(width[1]).toBe(width[0]));
+    const scroll = await page.locator('#mobile_controls').evaluate(element => {
+        element.scrollTop = element.scrollHeight;
+        return {top: element.scrollTop, overflow: getComputedStyle(element).overflowY,
+            touchAction: getComputedStyle(element).touchAction};
+    });
+    expect(scroll.top).toBeGreaterThan(0);
+    expect(scroll.overflow).toBe('auto');
+    expect(scroll.touchAction).toBe('pan-y');
+});
+
+test('portrait controls stay fixed in the lower half', async ({page}) => {
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('#game_focus_button').click();
+    await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
+    await page.waitForTimeout(500);
+    await page.locator('#canvas').evaluate(canvas => {
+        canvas.style.width = canvas.width + 'px';
+        canvas.style.height = canvas.height + 'px';
+    });
+    const layout = await page.locator('#mobile_controls').evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        return {position: getComputedStyle(element).position, top: rect.top, bottom: rect.bottom,
+            width: rect.width, canvasBottom: document.querySelector('#canvas').getBoundingClientRect().bottom,
+            viewport: [window.innerWidth, window.innerHeight]};
+    });
+
+    expect(layout.position).toBe('fixed');
+    expect(layout.top).toBeGreaterThanOrEqual(layout.viewport[1] * 0.48);
+    expect(layout.bottom).toBeLessThanOrEqual(layout.viewport[1] + 1);
+    expect(layout.width).toBeGreaterThanOrEqual(layout.viewport[0] - 1);
+    expect(layout.canvasBottom).toBeLessThanOrEqual(layout.top + 1);
+});
+
+test('non-game pages keep the normal mobile viewport', async ({page}) => {
+    await page.goto(baseURL + '/', {waitUntil: 'networkidle'});
+    expect(await page.evaluate(() => getComputedStyle(document.body).paddingBottom)).toBe('0px');
+    await page.setViewportSize({width: 844, height: 390});
+    await page.goto(baseURL + '/', {waitUntil: 'networkidle'});
+    expect(await page.evaluate(() => getComputedStyle(document.body).paddingRight)).toBe('0px');
+});
+
+test('landscape controls dock beside the game', async ({page}) => {
+    await page.setViewportSize({width: 844, height: 390});
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('#game_focus_button').click();
+    await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
+    await page.waitForTimeout(500);
+    await page.locator('#canvas').evaluate(canvas => {
+        canvas.style.width = canvas.width + 'px';
+        canvas.style.height = canvas.height + 'px';
+    });
+    const layout = await page.evaluate(() => {
+        const controls = document.querySelector('#mobile_controls').getBoundingClientRect();
+        const canvas = document.querySelector('#canvas').getBoundingClientRect();
+        return {controls: {left: controls.left, top: controls.top, right: controls.right,
+            bottom: controls.bottom}, canvasRight: canvas.right, canvasBottom: canvas.bottom,
+            viewport: [window.innerWidth, window.innerHeight]};
+    });
+
+    expect(layout.controls.left).toBeGreaterThan(layout.viewport[0] * 0.5);
+    expect(layout.controls.top).toBeLessThanOrEqual(1);
+    expect(layout.controls.right).toBeGreaterThanOrEqual(layout.viewport[0] - 1);
+    expect(layout.controls.bottom).toBeGreaterThanOrEqual(layout.viewport[1] - 1);
+    expect(layout.canvasRight).toBeLessThanOrEqual(layout.controls.left + 1);
+    expect(layout.canvasBottom).toBeLessThanOrEqual(layout.viewport[1] + 1);
+});
+
+test('web fullscreen keeps mobile controls visible', async ({page}) => {
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('input[value="网页全屏"]').click();
+    await expect(page.locator('#screen_container')).toHaveClass(/html-fullscreen/);
+    await expect(page.locator('#mobile_controls')).toBeVisible();
+    await expect(page.locator('#screen_container #mobile_controls')).toHaveCount(1);
+});
+
+test('desktop fullscreen controls are not blocked by the loader splash', async ({browser}) => {
+    const page = await browser.newPage({viewport: {width: 1280, height: 720}});
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('input[value="网页全屏"]').click();
+    await expect(page.locator('#screen_container')).toHaveClass(/html-fullscreen/);
+    await page.close();
+});
+
+test('game fullscreen keeps mobile controls visible', async ({page}) => {
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('#game_focus_button').click();
+    await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
+    await page.locator('input[value="全屏游戏"]').click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement && document.fullscreenElement.id))
+        .toBe('screen_container');
+    await expect(page.locator('#mobile_controls')).toBeVisible();
+    const canvasRatio = await page.locator('#canvas').evaluate(canvas => {
+        const rect = canvas.getBoundingClientRect();
+        return {rendered: rect.width / rect.height, intrinsic: canvas.width / canvas.height};
+    });
+    expect(Math.abs(canvasRatio.rendered - canvasRatio.intrinsic)).toBeLessThan(0.02);
+    await page.locator('input[value="退出全屏"]').click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
+});
+
+test('rejected fullscreen request falls back to web fullscreen', async ({page}) => {
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('#screen_container').evaluate(element => {
+        element.requestFullscreen = function () { return Promise.reject(new Error('fullscreen blocked')); };
+        element.webkitRequestFullscreen = undefined;
+    });
+    await page.locator('input[value="全屏游戏"]').click();
+    await expect(page.locator('#screen_container')).toHaveClass(/html-fullscreen/);
+    await expect(page.locator('#mobile_controls')).toBeVisible();
+    expect(errors).toEqual([]);
 });
 
 test('mobile controls are usable and custom mappings survive reload', async ({page}) => {
