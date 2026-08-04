@@ -477,6 +477,13 @@ canvas.emscripten {
         z-index: 2100;
     }
 
+    .game-page #screen_container.html-fullscreen,
+    .game-page #screen_container:fullscreen,
+    .game-page #screen_container:-webkit-full-screen {
+        box-sizing: border-box;
+        padding-right: 42vw;
+    }
+
     #screen_container.html-fullscreen canvas,
     #screen_container:fullscreen canvas,
     #screen_container:-webkit-full-screen canvas {

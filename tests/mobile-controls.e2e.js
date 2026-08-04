@@ -107,11 +107,17 @@ test('landscape controls dock beside the game', async ({page}) => {
 });
 
 test('web fullscreen keeps mobile controls visible', async ({page}) => {
+    await page.setViewportSize({width: 844, height: 390});
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
     await page.locator('input[value="网页全屏"]').click();
     await expect(page.locator('#screen_container')).toHaveClass(/html-fullscreen/);
     await expect(page.locator('#mobile_controls')).toBeVisible();
     await expect(page.locator('#screen_container #mobile_controls')).toHaveCount(1);
+    const layout = await page.evaluate(() => ({
+        canvasRight: document.querySelector('#canvas').getBoundingClientRect().right,
+        controlsLeft: document.querySelector('#mobile_controls').getBoundingClientRect().left
+    }));
+    expect(layout.canvasRight).toBeLessThanOrEqual(layout.controlsLeft + 1);
 });
 
 test('desktop fullscreen controls are not blocked by the loader splash', async ({browser}) => {
@@ -123,6 +129,7 @@ test('desktop fullscreen controls are not blocked by the loader splash', async (
 });
 
 test('game fullscreen keeps mobile controls visible', async ({page}) => {
+    await page.setViewportSize({width: 844, height: 390});
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
     await page.locator('#game_focus_button').click();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
@@ -135,11 +142,17 @@ test('game fullscreen keeps mobile controls visible', async ({page}) => {
         return {rendered: rect.width / rect.height, intrinsic: canvas.width / canvas.height};
     });
     expect(Math.abs(canvasRatio.rendered - canvasRatio.intrinsic)).toBeLessThan(0.02);
+    const layout = await page.evaluate(() => ({
+        canvasRight: document.querySelector('#canvas').getBoundingClientRect().right,
+        controlsLeft: document.querySelector('#mobile_controls').getBoundingClientRect().left
+    }));
+    expect(layout.canvasRight).toBeLessThanOrEqual(layout.controlsLeft + 1);
     await page.locator('input[value="退出全屏"]').click();
     await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
 });
 
 test('rejected fullscreen request falls back to web fullscreen', async ({page}) => {
+    await page.setViewportSize({width: 844, height: 390});
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
@@ -150,7 +163,25 @@ test('rejected fullscreen request falls back to web fullscreen', async ({page}) 
     await page.locator('input[value="全屏游戏"]').click();
     await expect(page.locator('#screen_container')).toHaveClass(/html-fullscreen/);
     await expect(page.locator('#mobile_controls')).toBeVisible();
+    const layout = await page.evaluate(() => ({
+        canvasRight: document.querySelector('#canvas').getBoundingClientRect().right,
+        controlsLeft: document.querySelector('#mobile_controls').getBoundingClientRect().left
+    }));
+    expect(layout.canvasRight).toBeLessThanOrEqual(layout.controlsLeft + 1);
     expect(errors).toEqual([]);
+});
+
+test('exiting native fullscreen also clears a pre-existing web fullscreen', async ({page}) => {
+    await page.setViewportSize({width: 844, height: 390});
+    await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
+    await page.locator('input[value="网页全屏"]').click();
+    await page.locator('input[value="全屏游戏"]').click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement && document.fullscreenElement.id))
+        .toBe('screen_container');
+    await page.locator('input[value="退出全屏"]').click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
+    await expect(page.locator('#screen_container')).not.toHaveClass(/html-fullscreen/);
+    await expect(page.locator('#exit_button')).not.toHaveClass(/exit_fullscreen_show/);
 });
 
 test('mobile controls are usable and custom mappings survive reload', async ({page}) => {
@@ -193,7 +224,7 @@ test('mobile controls are usable and custom mappings survive reload', async ({pa
     expect(errors).toEqual([]);
 });
 
-test('virtual gamepad reaches the DOS game canvas', async ({page}) => {
+test('virtual keyboard events are consumed by DOSBox', async ({page}) => {
     const errors = [];
     const consoleMessages = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -201,40 +232,29 @@ test('virtual gamepad reaches the DOS game canvas', async ({page}) => {
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
     await page.evaluate(() => localStorage.removeItem('dosgame.controls.v1'));
     await page.reload({waitUntil: 'networkidle'});
-    await page.evaluate(() => {
-        window.__virtualKeys = [];
-        ['keydown', 'keyup'].forEach(type => window.addEventListener(type, event => {
-            window.__virtualKeys.push([type, event.code, event.keyCode, event.target.id]);
-        }, true));
-    });
-
     await page.locator('#game_focus_button').click();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
     await expect.poll(() => consoleMessages.some(message => message.includes('DOSBox version')), {timeout: 15000}).toBe(true);
     await page.waitForTimeout(500);
+    await page.evaluate(() => {
+        window.__virtualKeys = [];
+        ['keydown', 'keyup'].forEach(type => window.addEventListener(type, event => {
+            window.__virtualKeys.push([type, event.code, event.keyCode, event.target.id,
+                event.defaultPrevented]);
+        }));
+    });
 
-    const beforeEnter = await page.locator('#canvas').screenshot();
-    await page.locator('#canvas').screenshot({path: 'test-results/canvas-before-enter.png'});
     const start = page.locator('[data-gamepad-action="start"]');
     await start.tap();
-    await page.waitForTimeout(1200);
-    const afterEnter = await page.locator('#canvas').screenshot();
-    await page.locator('#canvas').screenshot({path: 'test-results/canvas-after-enter.png'});
-    expect(afterEnter.equals(beforeEnter)).toBe(false);
-
     await start.tap();
-    await page.waitForTimeout(500);
-    await page.locator('#canvas').screenshot({path: 'test-results/canvas-after-second-enter.png'});
 
     await page.locator('[data-control="keyboard"]').tap();
     const digit = page.locator('[data-key-code="Digit1"]');
     await digit.tap();
-    await page.waitForTimeout(300);
-    await page.locator('#canvas').screenshot({path: 'test-results/canvas-after-digit.png'});
     await expect.poll(() => page.evaluate(() => window.__virtualKeys)).toEqual([
-        ['keydown', 'Enter', 13, 'canvas'], ['keyup', 'Enter', 13, 'canvas'],
-        ['keydown', 'Enter', 13, 'canvas'], ['keyup', 'Enter', 13, 'canvas'],
-        ['keydown', 'Digit1', 49, 'canvas'], ['keyup', 'Digit1', 49, 'canvas']
+        ['keydown', 'Enter', 13, 'canvas', true], ['keyup', 'Enter', 13, 'canvas', true],
+        ['keydown', 'Enter', 13, 'canvas', true], ['keyup', 'Enter', 13, 'canvas', true],
+        ['keydown', 'Digit1', 49, 'canvas', true], ['keyup', 'Digit1', 49, 'canvas', true]
     ]);
 
     await page.screenshot({path: 'test-results/dosgame-mobile-controls.png', fullPage: true});

@@ -38,17 +38,21 @@ function gameFullscreen() {
 }
 
 function exitGameFullscreen() {
+    var screenContainer = document.getElementById('screen_container');
     var exit = document.exitFullscreen || document.webkitExitFullscreen;
     if (document.fullscreenElement || document.webkitFullscreenElement) {
+        screenContainer.classList.remove('html-fullscreen');
         exit.call(document);
     }
-    else if (document.getElementById('screen_container').classList.contains('html-fullscreen')) {
+    else if (screenContainer.classList.contains('html-fullscreen')) {
         htmlFullscreen();
     }
 }
 
 function syncFullscreenExitButton() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    var hasNativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    var hasWebFullscreen = document.getElementById('screen_container').classList.contains('html-fullscreen');
+    if (!hasNativeFullscreen && !hasWebFullscreen) {
         document.getElementById('exit_button').classList.remove('exit_fullscreen_show');
     }
 }
