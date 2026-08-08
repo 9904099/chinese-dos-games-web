@@ -255,6 +255,23 @@ test('mobile controls are usable and custom mappings survive reload', async ({pa
     expect(errors).toEqual([]);
 });
 
+test('a control pressed during download can still start the game when loading finishes', async ({page}) => {
+    let releaseGameDownload;
+    const gameDownloadReleased = new Promise(resolve => { releaseGameDownload = resolve; });
+    await page.route('**/static/games/bin/*.zip', async route => {
+        await gameDownloadReleased;
+        await route.continue();
+    });
+
+    await page.goto(baseURL + gamePath, {waitUntil: 'domcontentloaded'});
+    await page.locator('[data-gamepad-action="start"]').tap();
+    releaseGameDownload();
+
+    await expect(page.getByText('Press any key to continue...')).toBeVisible({timeout: 15000});
+    await page.locator('[data-gamepad-action="start"]').tap();
+    await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
+});
+
 test('virtual keyboard events are consumed by DOSBox', async ({page}) => {
     const errors = [];
     const consoleMessages = [];

@@ -318,15 +318,35 @@
 
         canvas.addEventListener('click', function () { canvas.focus(); });
         canvas.focus();
+        var splash = documentRef.getElementById('emularity-splash-screen');
+        var splashObserver = null;
+        function stopCanvasActivation() {
+            rootElement.removeEventListener('pointerdown', activateCanvas, true);
+            if (splashObserver) {
+                splashObserver.disconnect();
+                splashObserver = null;
+            }
+        }
         function activateCanvas(event) {
             if (!event.target.closest('[data-control-panel]')) {
                 return;
             }
-            rootElement.removeEventListener('pointerdown', activateCanvas, true);
+            if (splash && splash.style.display === 'none') {
+                stopCanvasActivation();
+                return;
+            }
             canvas.click();
             canvas.focus();
         }
         rootElement.addEventListener('pointerdown', activateCanvas, true);
+        if (splash && window.MutationObserver) {
+            splashObserver = new window.MutationObserver(function () {
+                if (splash.style.display === 'none') {
+                    stopCanvasActivation();
+                }
+            });
+            splashObserver.observe(splash, {attributes: true, attributeFilter: ['style']});
+        }
 
         rootElement.querySelectorAll('[data-gamepad-action]').forEach(function (button) {
             var action = button.dataset.gamepadAction;
