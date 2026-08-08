@@ -318,6 +318,8 @@
 
         canvas.addEventListener('click', function () { canvas.focus(); });
         canvas.focus();
+        var initialCanvasWidth = canvas.width;
+        var initialCanvasHeight = canvas.height;
         var splash = documentRef.getElementById('emularity-splash-screen');
         var splashObserver = null;
         function stopCanvasActivation() {
@@ -327,19 +329,13 @@
                 splashObserver = null;
             }
         }
-        function activateCanvas(event) {
-            if (!event.target.closest('[data-control-panel]')) {
+        function observeSplash() {
+            if (!splash) {
+                splash = documentRef.getElementById('emularity-splash-screen');
+            }
+            if (!splash || splashObserver || !window.MutationObserver) {
                 return;
             }
-            if (splash && splash.style.display === 'none') {
-                stopCanvasActivation();
-                return;
-            }
-            canvas.click();
-            canvas.focus();
-        }
-        rootElement.addEventListener('pointerdown', activateCanvas, true);
-        if (splash && window.MutationObserver) {
             splashObserver = new window.MutationObserver(function () {
                 if (splash.style.display === 'none') {
                     stopCanvasActivation();
@@ -347,6 +343,21 @@
             });
             splashObserver.observe(splash, {attributes: true, attributeFilter: ['style']});
         }
+        function activateCanvas(event) {
+            if (!event.target.closest('[data-control-panel]')) {
+                return;
+            }
+            observeSplash();
+            if ((splash && splash.style.display === 'none') ||
+                    canvas.width !== initialCanvasWidth || canvas.height !== initialCanvasHeight) {
+                stopCanvasActivation();
+                return;
+            }
+            canvas.click();
+            canvas.focus();
+        }
+        rootElement.addEventListener('pointerdown', activateCanvas, true);
+        observeSplash();
 
         rootElement.querySelectorAll('[data-gamepad-action]').forEach(function (button) {
             var action = button.dataset.gamepadAction;

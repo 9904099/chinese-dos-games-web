@@ -270,6 +270,14 @@ test('a control pressed during download can still start the game when loading fi
     await expect(page.getByText('Press any key to continue...')).toBeVisible({timeout: 15000});
     await page.locator('[data-gamepad-action="start"]').tap();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
+    await expect(page.locator('.emularity-splash-screen')).toBeHidden();
+
+    await page.locator('#canvas').evaluate(canvas => {
+        window.__postStartCanvasClicks = 0;
+        canvas.addEventListener('click', () => { window.__postStartCanvasClicks += 1; });
+    });
+    await page.locator('[data-gamepad-action="a"]').tap();
+    await expect.poll(() => page.evaluate(() => window.__postStartCanvasClicks)).toBe(0);
 });
 
 test('virtual keyboard events are consumed by DOSBox', async ({page}) => {
