@@ -41,11 +41,13 @@ function mouseHarness() {
 
 test('default gamepad bindings cover directions and action buttons', () => {
     assert.deepEqual(Object.keys(DEFAULT_BINDINGS), [
-        'up', 'down', 'left', 'right', 'a', 'b', 'x', 'y', 'start', 'select'
+        'up', 'down', 'left', 'right', 'a', 'b', 'x', 'y', 'start', 'select', 'pageup', 'pagedown'
     ]);
     assert.equal(DEFAULT_BINDINGS.up.code, 'ArrowUp');
     assert.equal(DEFAULT_BINDINGS.start.code, 'Enter');
     assert.equal(DEFAULT_BINDINGS.select.code, 'Escape');
+    assert.equal(DEFAULT_BINDINGS.pageup.code, 'PageUp');
+    assert.equal(DEFAULT_BINDINGS.pagedown.code, 'PageDown');
 });
 
 test('press and release dispatch one complete keyboard lifecycle', () => {

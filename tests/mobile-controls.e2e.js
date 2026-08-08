@@ -51,7 +51,7 @@ test('gamepad fits a 320px viewport without internal overflow', async ({page}) =
 
 test('portrait controls stay fixed in the lower half', async ({page}) => {
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
-    await page.locator('#game_focus_button').click();
+    await page.locator('[data-gamepad-action="start"]').tap();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
     await page.waitForTimeout(500);
     await page.locator('#canvas').evaluate(canvas => {
@@ -83,7 +83,7 @@ test('non-game pages keep the normal mobile viewport', async ({page}) => {
 test('landscape controls dock beside the game', async ({page}) => {
     await page.setViewportSize({width: 844, height: 390});
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
-    await page.locator('#game_focus_button').click();
+    await page.locator('[data-gamepad-action="start"]').tap();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
     await page.waitForTimeout(500);
     await page.locator('#canvas').evaluate(canvas => {
@@ -93,8 +93,11 @@ test('landscape controls dock beside the game', async ({page}) => {
     const layout = await page.evaluate(() => {
         const controls = document.querySelector('#mobile_controls').getBoundingClientRect();
         const canvas = document.querySelector('#canvas').getBoundingClientRect();
+        const pageup = document.querySelector('[data-gamepad-action="pageup"]').getBoundingClientRect();
+        const pagedown = document.querySelector('[data-gamepad-action="pagedown"]').getBoundingClientRect();
         return {controls: {left: controls.left, top: controls.top, right: controls.right,
             bottom: controls.bottom}, canvasRight: canvas.right, canvasBottom: canvas.bottom,
+            pageupBottom: pageup.bottom, pagedownBottom: pagedown.bottom,
             viewport: [window.innerWidth, window.innerHeight]};
     });
 
@@ -104,6 +107,8 @@ test('landscape controls dock beside the game', async ({page}) => {
     expect(layout.controls.bottom).toBeGreaterThanOrEqual(layout.viewport[1] - 1);
     expect(layout.canvasRight).toBeLessThanOrEqual(layout.controls.left + 1);
     expect(layout.canvasBottom).toBeLessThanOrEqual(layout.viewport[1] + 1);
+    expect(layout.pageupBottom).toBeLessThanOrEqual(layout.viewport[1]);
+    expect(layout.pagedownBottom).toBeLessThanOrEqual(layout.viewport[1]);
 });
 
 test('web fullscreen keeps mobile controls visible', async ({page}) => {
@@ -131,7 +136,7 @@ test('desktop fullscreen controls are not blocked by the loader splash', async (
 test('game fullscreen keeps mobile controls visible', async ({page}) => {
     await page.setViewportSize({width: 844, height: 390});
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
-    await page.locator('#game_focus_button').click();
+    await page.locator('[data-gamepad-action="start"]').tap();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
     await page.locator('input[value="全屏游戏"]').click();
     await expect.poll(() => page.evaluate(() => document.fullscreenElement && document.fullscreenElement.id))
@@ -190,7 +195,27 @@ test('mobile controls are usable and custom mappings survive reload', async ({pa
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
 
     await expect(page.locator('#mobile_controls')).toBeVisible();
+    await expect(page.locator('#game_focus_button')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.id)).toBe('canvas');
     await expect(page.locator('[data-gamepad-action="up"]')).toHaveCSS('min-height', '44px');
+    await expect(page.locator('[data-gamepad-action="pageup"]')).toHaveAttribute('data-bound-key', 'PgUp');
+    await expect(page.locator('[data-gamepad-action="pagedown"]')).toHaveAttribute('data-bound-key', 'PgDn');
+
+    const systemButtons = await page.locator('.gamepad-system').evaluate(element => {
+        const rect = action => element.querySelector(`[data-gamepad-action="${action}"]`).getBoundingClientRect();
+        return {select: rect('select'), start: rect('start'), pageup: rect('pageup'), pagedown: rect('pagedown'),
+            viewportHeight: window.innerHeight,
+            pageupWhiteSpace: getComputedStyle(element.querySelector('[data-gamepad-action="pageup"]')).whiteSpace,
+            pagedownWhiteSpace: getComputedStyle(element.querySelector('[data-gamepad-action="pagedown"]')).whiteSpace};
+    });
+    expect(Math.abs(systemButtons.select.x - systemButtons.pageup.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(systemButtons.start.x - systemButtons.pagedown.x)).toBeLessThanOrEqual(1);
+    expect(systemButtons.pageup.y).toBeGreaterThan(systemButtons.select.y);
+    expect(systemButtons.pagedown.y).toBeGreaterThan(systemButtons.start.y);
+    expect(systemButtons.pageup.bottom).toBeLessThanOrEqual(systemButtons.viewportHeight);
+    expect(systemButtons.pagedown.bottom).toBeLessThanOrEqual(systemButtons.viewportHeight);
+    expect(systemButtons.pageupWhiteSpace).toBe('nowrap');
+    expect(systemButtons.pagedownWhiteSpace).toBe('nowrap');
 
     await page.locator('[data-control="keyboard"]').click();
     await expect(page.locator('#virtual_keyboard')).toBeVisible();
@@ -203,16 +228,22 @@ test('mobile controls are usable and custom mappings survive reload', async ({pa
 
     await page.locator('[data-control="mapping"]').click();
     await page.locator('select[data-mapping-action="a"]').selectOption('Space');
+    await page.locator('select[data-mapping-action="pageup"]').selectOption('F11');
+    await page.locator('select[data-mapping-action="pagedown"]').selectOption('F12');
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('dosgame.controls.v1')).a)).toBe('Space');
 
     await page.reload({waitUntil: 'networkidle'});
     await expect(page.locator('[data-gamepad-action="a"]')).toHaveAttribute('data-bound-key', 'Space');
+    await expect(page.locator('[data-gamepad-action="pageup"]')).toHaveAttribute('data-bound-key', 'F11');
+    await expect(page.locator('[data-gamepad-action="pagedown"]')).toHaveAttribute('data-bound-key', 'F12');
     await page.evaluate(() => {
         window.__mappedKeys = [];
         window.addEventListener('keydown', event => window.__mappedKeys.push(event.code), true);
     });
     await page.locator('[data-gamepad-action="a"]').tap();
-    await expect.poll(() => page.evaluate(() => window.__mappedKeys)).toContain('Space');
+    await page.locator('[data-gamepad-action="pageup"]').tap();
+    await page.locator('[data-gamepad-action="pagedown"]').tap();
+    await expect.poll(() => page.evaluate(() => window.__mappedKeys)).toEqual(['Space', 'F11', 'F12']);
 
     await page.locator('[data-control="mouse"]').tap();
     await page.evaluate(() => {
@@ -232,7 +263,7 @@ test('virtual keyboard events are consumed by DOSBox', async ({page}) => {
     await page.goto(baseURL + gamePath, {waitUntil: 'networkidle'});
     await page.evaluate(() => localStorage.removeItem('dosgame.controls.v1'));
     await page.reload({waitUntil: 'networkidle'});
-    await page.locator('#game_focus_button').click();
+    await page.locator('[data-gamepad-action="start"]').tap();
     await expect.poll(() => page.locator('#canvas').evaluate(canvas => canvas.width), {timeout: 15000}).toBe(640);
     await expect.poll(() => consoleMessages.some(message => message.includes('DOSBox version')), {timeout: 15000}).toBe(true);
     await page.waitForTimeout(500);

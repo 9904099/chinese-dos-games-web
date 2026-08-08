@@ -16,10 +16,10 @@ test('base template declares a mobile viewport', () => {
 });
 
 test('mobile control assets are cache busted', () => {
-    assert.match(baseTemplate, /filename='css\/main\.css', v='mobile-controls-3'/);
-    assert.match(baseTemplate, /filename='js\/game\.js', v='mobile-controls-3'/);
-    assert.match(gameTemplate, /filename='js\/game-controls\.js', v='mobile-controls-3'/);
-    assert.match(gameTemplate, /filename='js\/game\.js', v='mobile-controls-3'/);
+    assert.match(baseTemplate, /filename='css\/main\.css', v='mobile-controls-4'/);
+    assert.match(baseTemplate, /filename='js\/game\.js', v='mobile-controls-4'/);
+    assert.match(gameTemplate, /filename='js\/game-controls\.js', v='mobile-controls-4'/);
+    assert.match(gameTemplate, /filename='js\/game\.js', v='mobile-controls-4'/);
 });
 
 test('game canvas is focusable and exposes mobile input controls', () => {
@@ -30,6 +30,26 @@ test('game canvas is focusable and exposes mobile input controls', () => {
     assert.match(gameTemplate, /data-control="mouse"/);
     assert.match(gameTemplate, /id="mapping_editor"/);
     assert.match(gameTemplate, /js\/game-controls\.js/);
+});
+
+test('game is focused without a separate focus control', () => {
+    assert.doesNotMatch(gameTemplate, /id="game_focus_button"/);
+    assert.doesNotMatch(gameTemplate, /启动\/聚焦游戏/);
+    assert.match(gameJs, /DosGameControls\.init\(document\)/);
+    const controlsJs = fs.readFileSync(path.join(root, 'static/js/game-controls.js'), 'utf8');
+    assert.match(controlsJs, /canvas\.focus\(\)/);
+    assert.match(controlsJs, /event\.target\.closest\('\[data-control-panel\]'\)/);
+    assert.match(controlsJs, /rootElement\.addEventListener\('pointerdown', activateCanvas, true\)/);
+});
+
+test('gamepad adds customizable PageUp and PageDown below select and start', () => {
+    const select = gameTemplate.indexOf('data-gamepad-action="select"');
+    const start = gameTemplate.indexOf('data-gamepad-action="start"');
+    const pageup = gameTemplate.indexOf('data-gamepad-action="pageup"');
+    const pagedown = gameTemplate.indexOf('data-gamepad-action="pagedown"');
+
+    assert.ok(select >= 0 && start > select && pageup > start && pagedown > pageup);
+    assert.match(css, /\.gamepad-system[\s\S]*display:\s*grid[\s\S]*grid-template-columns:\s*repeat\(2/);
 });
 
 test('mobile controls prevent browser gestures and respect safe areas', () => {

@@ -12,8 +12,6 @@
                         <canvas class="emscripten" id="canvas" tabindex="0"
                                 aria-label="DOS 游戏画面" oncontextmenu="event.preventDefault()"></canvas>
                         <section class="mobile-controls" id="mobile_controls" aria-label="移动端游戏控制">
-                            <button class="btn btn-primary btn-block game-focus-button" id="game_focus_button"
-                                    type="button">启动/聚焦游戏</button>
                             <div id="controls" class="mobile-screen-actions">
                                 <input class="btn btn-light" type="button" value="网页全屏"
                                        onclick="htmlFullscreen();">
@@ -44,6 +42,8 @@
                                 <div class="gamepad-system">
                                     <button type="button" data-gamepad-action="select">选择</button>
                                     <button type="button" data-gamepad-action="start">开始</button>
+                                    <button type="button" data-gamepad-action="pageup">PageUp</button>
+                                    <button type="button" data-gamepad-action="pagedown">PageDown</button>
                                 </div>
                             </div>
 
@@ -74,7 +74,6 @@
                         <div>
                             <h5 class="card-title game-title">{{ game_info["name"]["zh-Hans"] }}</h5>
                         </div>
-                        <p class="mobile-control-hint">手机请先点“启动/聚焦游戏”，再使用下方手柄、鼠标或键盘。</p>
                     </div>
                 </div>
             </div>
@@ -142,7 +141,7 @@
             }
         }
     </script>
-    <script src="{{ url_for('static', filename='js/game-controls.js', v='mobile-controls-3') }}"></script>
-    <script src="{{ url_for('static', filename='js/game.js', v='mobile-controls-3') }}"></script>
+    <script src="{{ url_for('static', filename='js/game-controls.js', v='mobile-controls-4') }}"></script>
+    <script src="{{ url_for('static', filename='js/game.js', v='mobile-controls-4') }}"></script>
 {% endblock %}
 

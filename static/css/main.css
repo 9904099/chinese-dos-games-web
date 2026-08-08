@@ -186,10 +186,6 @@ canvas.emscripten {
     z-index: 2100;
 }
 
-.game-focus-button {
-    margin-bottom: 0.5rem;
-}
-
 .mobile-controls button,
 .virtual-trackpad {
     touch-action: none;
@@ -201,6 +197,12 @@ canvas.emscripten {
     gap: 0.35rem;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-bottom: 0.5rem;
+}
+
+#screen_container.html-fullscreen .mobile-screen-actions,
+#screen_container:fullscreen .mobile-screen-actions,
+#screen_container:-webkit-full-screen .mobile-screen-actions {
+    margin-right: 6rem;
 }
 
 .mobile-control-tabs {
@@ -283,14 +285,16 @@ canvas.emscripten {
 }
 
 .gamepad-system {
-    display: flex;
+    display: grid;
     gap: 0.75rem;
     grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 96px));
     justify-content: center;
 }
 
 .gamepad-system button {
     min-width: 96px;
+    white-space: nowrap;
 }
 
 .virtual-trackpad {

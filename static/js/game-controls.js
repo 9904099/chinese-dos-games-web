@@ -13,6 +13,7 @@
         ['ArrowUp', 'ArrowUp', 38, '↑'], ['ArrowDown', 'ArrowDown', 40, '↓'],
         ['ArrowLeft', 'ArrowLeft', 37, '←'], ['ArrowRight', 'ArrowRight', 39, '→'],
         ['Enter', 'Enter', 13, 'Enter'], ['Escape', 'Escape', 27, 'Esc'],
+        ['PageUp', 'PageUp', 33, 'PgUp'], ['PageDown', 'PageDown', 34, 'PgDn'],
         ['Space', ' ', 32, 'Space'], ['Tab', 'Tab', 9, 'Tab'],
         ['Backspace', 'Backspace', 8, '⌫'], ['ControlLeft', 'Control', 17, 'Ctrl'],
         ['AltLeft', 'Alt', 18, 'Alt'], ['ShiftLeft', 'Shift', 16, 'Shift'],
@@ -46,7 +47,9 @@
         x: KEY_BY_CODE.KeyA,
         y: KEY_BY_CODE.KeyS,
         start: KEY_BY_CODE.Enter,
-        select: KEY_BY_CODE.Escape
+        select: KEY_BY_CODE.Escape,
+        pageup: KEY_BY_CODE.PageUp,
+        pagedown: KEY_BY_CODE.PageDown
     };
     var STORAGE_KEY = 'dosgame.controls.v1';
 
@@ -267,7 +270,8 @@
     }
 
     function renderMappingEditor(documentRef, container, bindings, storage, gamepadButtons) {
-        var labels = {up: '上', down: '下', left: '左', right: '右', a: 'A', b: 'B', x: 'X', y: 'Y', start: '开始', select: '选择'};
+        var labels = {up: '上', down: '下', left: '左', right: '右', a: 'A', b: 'B', x: 'X', y: 'Y',
+            start: '开始', select: '选择', pageup: 'PageUp', pagedown: 'PageDown'};
         Object.keys(DEFAULT_BINDINGS).forEach(function (action) {
             var row = documentRef.createElement('label');
             var select = documentRef.createElement('select');
@@ -313,10 +317,16 @@
         var gamepadButtons = {};
 
         canvas.addEventListener('click', function () { canvas.focus(); });
-        documentRef.getElementById('game_focus_button').addEventListener('click', function () {
+        canvas.focus();
+        function activateCanvas(event) {
+            if (!event.target.closest('[data-control-panel]')) {
+                return;
+            }
+            rootElement.removeEventListener('pointerdown', activateCanvas, true);
             canvas.click();
             canvas.focus();
-        });
+        }
+        rootElement.addEventListener('pointerdown', activateCanvas, true);
 
         rootElement.querySelectorAll('[data-gamepad-action]').forEach(function (button) {
             var action = button.dataset.gamepadAction;
