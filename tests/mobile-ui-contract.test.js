@@ -10,6 +10,7 @@ const gameTemplate = fs.readFileSync(path.join(root, 'templates/game.html'), 'ut
 const baseTemplate = fs.readFileSync(path.join(root, 'templates/base.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'static/css/main.css'), 'utf8');
 const gameJs = fs.readFileSync(path.join(root, 'static/js/game.js'), 'utf8');
+const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
 
 test('base template declares a mobile viewport', () => {
     assert.match(baseTemplate, /name="viewport"[^>]*width=device-width/);
@@ -40,6 +41,9 @@ test('game is focused without a separate focus control', () => {
     assert.match(controlsJs, /canvas\.focus\(\)/);
     assert.match(controlsJs, /event\.target\.closest\('\[data-control-panel\]'\)/);
     assert.match(controlsJs, /rootElement\.addEventListener\('pointerdown', activateCanvas, true\)/);
+    assert.doesNotMatch(readme, /启动\/聚焦游戏/);
+    assert.match(readme, /PageUp/);
+    assert.match(readme, /PageDown/);
 });
 
 test('gamepad adds customizable PageUp and PageDown below select and start', () => {
